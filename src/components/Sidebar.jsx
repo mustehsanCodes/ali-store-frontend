@@ -103,7 +103,7 @@
 
 "use client"
 
-import { FaBox, FaShoppingCart, FaHome, FaTimes, FaBars } from "react-icons/fa"
+import { FaBox, FaShoppingCart, FaHome, FaTimes, FaBars, FaHandHoldingUsd } from "react-icons/fa"
 
 export default function Sidebar({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen, isMobile }) {
   // Handle closing sidebar when clicking a menu item on mobile
@@ -200,6 +200,18 @@ export default function Sidebar({ activeTab, setActiveTab, sidebarOpen, setSideb
               >
                 <FaShoppingCart className={`h-5 w-5 ${sidebarOpen ? "mr-3" : "mx-auto"}`} />
                 {sidebarOpen && <span>Sales</span>}
+              </button>
+            </li>
+            <li>
+              <button
+                className={`flex items-center w-full px-4 py-3 ${
+                  activeTab === "loans" ? "bg-gray-700" : "hover:bg-gray-700"
+                }`}
+                onClick={() => handleMenuClick("loans")}
+                aria-label="Loans"
+              >
+                <FaHandHoldingUsd className={`h-5 w-5 ${sidebarOpen ? "mr-3" : "mx-auto"}`} />
+                {sidebarOpen && <span>Loans</span>}
               </button>
             </li>
           </ul>

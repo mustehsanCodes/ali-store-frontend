@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { FaEdit, FaTrash, FaEye, FaEllipsisV } from "react-icons/fa"
 import Pagination from "./Pagination"
+import AutocompleteSelect from "./AutocompleteSelect"
 
 export default function InventoryTable({
   products,
@@ -37,10 +38,17 @@ export default function InventoryTable({
   }
 
   // Handle items per page change
-  const handleItemsPerPageChange = (e) => {
-    setItemsPerPage(Number(e.target.value))
+  const handleItemsPerPageChange = (value) => {
+    setItemsPerPage(Number(value))
     setCurrentPage(1) // Reset to first page when items per page changes
   }
+
+  const itemsPerPageOptions = [
+    { value: "5", label: "5" },
+    { value: "10", label: "10" },
+    { value: "25", label: "25" },
+    { value: "50", label: "50" },
+  ]
 
   // Apply pagination to products
   useEffect(() => {
@@ -64,17 +72,14 @@ export default function InventoryTable({
         <label htmlFor="itemsPerPage" className="mr-2 text-sm text-gray-700">
           Show:
         </label>
-        <select
-          id="itemsPerPage"
-          className="rounded-md border border-gray-300 px-2 py-1 text-sm"
-          value={itemsPerPage}
+        <AutocompleteSelect
+          value={itemsPerPage.toString()}
           onChange={handleItemsPerPageChange}
-        >
-          <option value={5}>5</option>
-          <option value={10}>10</option>
-          <option value={25}>25</option>
-          <option value={50}>50</option>
-        </select>
+          options={itemsPerPageOptions}
+          placeholder="10"
+          className="min-w-[80px]"
+          searchable={false}
+        />
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">

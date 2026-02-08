@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import AutocompleteSelect from "./AutocompleteSelect"
 
 export default function ManualSaleForm({ onAddManualSale, onSuccess, isMobile, editMode = false, saleData = null }) {
   const [manualSaleData, setManualSaleData] = useState({
@@ -31,6 +32,13 @@ export default function ManualSaleForm({ onAddManualSale, onSuccess, isMobile, e
     setManualSaleData({
       ...manualSaleData,
       [name]: value,
+    })
+  }
+
+  const handlePaymentMethodChange = (method) => {
+    setManualSaleData({
+      ...manualSaleData,
+      paymentMethod: method,
     })
   }
 
@@ -109,17 +117,18 @@ export default function ManualSaleForm({ onAddManualSale, onSuccess, isMobile, e
           Payment Method
         </label>
         <div className={`${isMobile ? "mt-1" : "col-span-3"}`}>
-          <select
-            id="paymentMethod"
-            name="paymentMethod"
-            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          <AutocompleteSelect
             value={manualSaleData.paymentMethod}
-            onChange={handleChange}
-          >
-            <option value="Cash">Cash</option>
-            <option value="Card">Card</option>
-            <option value="Bank Transfer">Bank Transfer</option>
-          </select>
+            onChange={handlePaymentMethodChange}
+            options={[
+              { value: "Cash", label: "Cash" },
+              { value: "Card", label: "Card" },
+              { value: "Bank Transfer", label: "Bank Transfer" },
+            ]}
+            placeholder="Select payment method"
+            className="w-full"
+            searchable={false}
+          />
         </div>
       </div>
 

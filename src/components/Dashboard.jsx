@@ -19,6 +19,8 @@ import SaleEditForm from "./SaleEditForm"
 import DashboardFilters from "./DashboardFilters"
 import DailySalesTable from "./DailySalesTable"
 import ManualSaleForm from "./ManualSaleForm"
+import Loans from "./loans/Loans"
+import AutocompleteSelect from "./AutocompleteSelect"
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("dashboard")
@@ -738,32 +740,30 @@ export default function Dashboard() {
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                       />
-                      <div className="relative w-full md:w-auto">
-                        <select
-                          className="w-full md:w-auto appearance-none flex items-center justify-between px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50"
-                          value={categoryFilter}
-                          onChange={(e) => setCategoryFilter(e.target.value)}
-                        >
-                          <option value="all">All Categories</option>
-                          {categories.map((category) => (
-                            <option key={category} value={category}>
-                              {category}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="relative w-full md:w-auto">
-                        <select
-                          className="w-full md:w-auto appearance-none flex items-center justify-between px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50"
-                          value={stockFilter}
-                          onChange={(e) => setStockFilter(e.target.value)}
-                        >
-                          <option value="all">All Stock</option>
-                          <option value="inStock">In Stock</option>
-                          <option value="lowStock">Low Stock</option>
-                          <option value="critical">Critical Stock</option>
-                        </select>
-                      </div>
+                      <AutocompleteSelect
+                        value={categoryFilter}
+                        onChange={setCategoryFilter}
+                        options={[
+                          { value: "all", label: "All Categories" },
+                          ...categories.map((category) => ({ value: category, label: category })),
+                        ]}
+                        placeholder="All Categories"
+                        className="w-full md:w-auto min-w-[180px]"
+                        searchable={true}
+                      />
+                      <AutocompleteSelect
+                        value={stockFilter}
+                        onChange={setStockFilter}
+                        options={[
+                          { value: "all", label: "All Stock" },
+                          { value: "inStock", label: "In Stock" },
+                          { value: "lowStock", label: "Low Stock" },
+                          { value: "critical", label: "Critical Stock" },
+                        ]}
+                        placeholder="All Stock"
+                        className="w-full md:w-auto min-w-[140px]"
+                        searchable={false}
+                      />
                     </div>
                   </div>
 
@@ -816,6 +816,8 @@ export default function Dashboard() {
                   />
                 </div>
               )}
+
+              {activeTab === "loans" && <Loans isMobile={isMobile} />}
             </>
           )}
         </main>

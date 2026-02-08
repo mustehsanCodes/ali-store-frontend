@@ -111,8 +111,9 @@
 
 import axios from "axios"
 
- const API_URL = "https://musthesan-backend-ncfl.vercel.app/api"
+//  const API_URL = "https://musthesan-backend-ncfl.vercel.app/api"
 // const API_URL = "http://localhost:5000/api"
+const API_URL = "https://ali-store-karyana.vercel.app/api"
 
 // Create axios instance
 const api = axios.create({
@@ -226,6 +227,111 @@ export const dashboardAPI = {
   getDailySalesData: async () => {
     const response = await api.get("/dashboard/daily-sales")
     return response.data.data
+  },
+}
+
+// Loan API calls
+export const loanAPI = {
+  getAll: async (params = {}) => {
+    const queryParams = new URLSearchParams(params).toString()
+    const response = await api.get(`/loans${queryParams ? `?${queryParams}` : ""}`)
+    return response.data.data
+  },
+
+  getById: async (id) => {
+    const response = await api.get(`/loans/${id}`)
+    return response.data.data
+  },
+
+  create: async (loanData) => {
+    const response = await api.post("/loans", loanData)
+    return response.data.data
+  },
+
+  update: async (id, loanData) => {
+    const response = await api.put(`/loans/${id}`, loanData)
+    return response.data.data
+  },
+
+  delete: async (id) => {
+    const response = await api.delete(`/loans/${id}`)
+    return response.data
+  },
+
+  addPayment: async (id, paymentData) => {
+    const response = await api.post(`/loans/${id}/payments`, paymentData)
+    return response.data.data
+  },
+
+  deletePayment: async (loanId, paymentId) => {
+    const response = await api.delete(`/loans/${loanId}/payments/${paymentId}`)
+    return response.data.data
+  },
+
+  getByDateRange: async (startDate, endDate, customerName) => {
+    const params = new URLSearchParams({ startDate, endDate })
+    if (customerName) params.append("customerName", customerName)
+    const response = await api.get(`/loans/date-range?${params.toString()}`)
+    return response.data.data
+  },
+
+  generatePDF: async (params = {}) => {
+    try {
+      const queryParams = new URLSearchParams(params).toString()
+      const response = await api.get(`/loans/generate-pdf?${queryParams}`, {
+        responseType: "blob",
+      })
+      
+      // Check if response is actually a PDF
+      if (response.data.type && response.data.type !== "application/pdf") {
+        // If it's JSON (error), parse it
+        const text = await response.data.text()
+        try {
+          const error = JSON.parse(text)
+          throw new Error(error.message || "Failed to generate PDF")
+        } catch (e) {
+          throw new Error("Failed to generate PDF")
+        }
+      }
+      
+      // Create blob URL and trigger download
+      const blob = new Blob([response.data], { type: "application/pdf" })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      
+      // Generate filename based on params
+      let filename = "loan-report"
+      if (params.loanId) {
+        filename = "loan-receipt"
+      } else if (params.customerName) {
+        filename = `loan-report-${params.customerName}`
+      }
+      link.download = `${filename}-${Date.now()}.pdf`
+      
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      return true
+    } catch (error) {
+      console.error("PDF generation error:", error)
+      // If it's a blob error, try to parse it
+      if (error.response && error.response.data) {
+        const blob = error.response.data
+        if (blob instanceof Blob) {
+          blob.text().then((text) => {
+            try {
+              const errorData = JSON.parse(text)
+              throw new Error(errorData.message || "Failed to generate PDF")
+            } catch (e) {
+              throw error
+            }
+          })
+        }
+      }
+      throw error
+    }
   },
 }
 

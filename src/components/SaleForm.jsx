@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { FaPlus, FaTrash, FaExclamationCircle, FaChevronDown } from "react-icons/fa"
+import { FaPlus, FaTrash, FaExclamationCircle } from "react-icons/fa"
+import AutocompleteSelect from "./AutocompleteSelect"
 
 export default function SaleForm({ products, onAddSale, onSuccess, isMobile }) {
   const [newSale, setNewSale] = useState({
@@ -22,14 +23,6 @@ export default function SaleForm({ products, onAddSale, onSuccess, isMobile }) {
 
   const [validationErrors, setValidationErrors] = useState([])
   const [hasStockError, setHasStockError] = useState(false)
-  const [productDropdownOpen, setProductDropdownOpen] = useState(null)
-  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(null)
-  const [paymentDropdownOpen, setPaymentDropdownOpen] = useState(false)
-
-  // Refs for handling outside clicks
-  const dropdownRefs = useRef([])
-  const categoryDropdownRefs = useRef([])
-  const paymentDropdownRef = useRef(null)
 
   // Filter out invalid products
   const validProducts = Array.isArray(products)
@@ -39,38 +32,10 @@ export default function SaleForm({ products, onAddSale, onSuccess, isMobile }) {
   // Get unique categories from products
   const categories = [...new Set(validProducts.map((product) => product.category))].filter(Boolean)
 
-  // Handle outside clicks to close dropdowns
-  useEffect(() => {
-    function handleClickOutside(event) {
-      // Close product dropdowns
-      if (
-        productDropdownOpen !== null &&
-        dropdownRefs.current[productDropdownOpen] &&
-        !dropdownRefs.current[productDropdownOpen].contains(event.target)
-      ) {
-        setProductDropdownOpen(null)
-      }
-
-      // Close category dropdowns
-      if (
-        categoryDropdownOpen !== null &&
-        categoryDropdownRefs.current[categoryDropdownOpen] &&
-        !categoryDropdownRefs.current[categoryDropdownOpen].contains(event.target)
-      ) {
-        setCategoryDropdownOpen(null)
-      }
-
-      // Close payment dropdown
-      if (paymentDropdownOpen && paymentDropdownRef.current && !paymentDropdownRef.current.contains(event.target)) {
-        setPaymentDropdownOpen(false)
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [productDropdownOpen, categoryDropdownOpen, paymentDropdownOpen])
+  // Helper function to get products by category
+  const getProductsByCategory = (category) => {
+    return validProducts.filter((product) => product.category === category)
+  }
 
   // Validate stock levels whenever items change
   useEffect(() => {
@@ -240,16 +205,6 @@ export default function SaleForm({ products, onAddSale, onSuccess, isMobile }) {
     }
   }
 
-  // Update refs array when items change
-  useEffect(() => {
-    dropdownRefs.current = dropdownRefs.current.slice(0, newSale.items.length)
-    categoryDropdownRefs.current = categoryDropdownRefs.current.slice(0, newSale.items.length)
-  }, [newSale.items.length])
-
-  // Get products filtered by category
-  const getProductsByCategory = (category) => {
-    return validProducts.filter((product) => product.category === category)
-  }
 
   return (
     <div className="grid gap-4 py-4">
@@ -272,80 +227,40 @@ export default function SaleForm({ products, onAddSale, onSuccess, isMobile }) {
         {newSale.items.map((item, index) => (
           <div key={`item-${index}`} className={`flex ${isMobile ? "flex-col" : "items-start"} gap-2`}>
             {/* Category Selection */}
-            <div className="relative flex-1" ref={(el) => (categoryDropdownRefs.current[index] = el)}>
+            <div className="flex-1">
               <label className="block text-xs font-medium text-gray-500 mb-1">Category</label>
-              <button
-                type="button"
-                className={`w-full flex items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
-                onClick={() => setCategoryDropdownOpen(categoryDropdownOpen === index ? null : index)}
-              >
-                {item.category ? item.category : "Select category"}
-                <FaChevronDown className="ml-2 h-4 w-4" />
-              </button>
-              {categoryDropdownOpen === index && (
-                <div className="absolute z-[110] mt-1 w-full rounded-md bg-white shadow-lg max-h-60 overflow-auto">
-                  <div className="py-1">
-                    {categories.length > 0 ? (
-                      categories.map((category) => (
-                        <button
-                          key={`category-${category}`}
-                          type="button"
-                          className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
-                          onClick={() => {
-                            handleUpdateSaleItemCategory(index, category)
-                            setCategoryDropdownOpen(null)
-                          }}
-                        >
-                          {category}
-                        </button>
-                      ))
-                    ) : (
-                      <div className="px-4 py-2 text-sm text-gray-500">No categories available</div>
-                    )}
-                  </div>
-                </div>
-              )}
+              <AutocompleteSelect
+                value={item.category || ""}
+                onChange={(category) => handleUpdateSaleItemCategory(index, category)}
+                options={[
+                  { value: "", label: "Select category" },
+                  ...categories.map((cat) => ({ value: cat, label: cat })),
+                ]}
+                placeholder="Select category"
+                className="w-full"
+                searchable={true}
+              />
             </div>
 
             {/* Product Selection - Only enabled if category is selected */}
-            <div className="relative flex-1" ref={(el) => (dropdownRefs.current[index] = el)}>
+            <div className="flex-1">
               <label className="block text-xs font-medium text-gray-500 mb-1">Product</label>
-              <button
-                type="button"
-                className={`w-full flex items-center justify-between rounded-md border ${
-                  item.productId && item.quantity > item.availableStock ? "border-red-500" : "border-gray-300"
-                } bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                  !item.category ? "opacity-50 cursor-not-allowed" : ""
+              <AutocompleteSelect
+                value={item.productId || ""}
+                onChange={(productId) => handleUpdateSaleItem(index, "productId", productId)}
+                options={[
+                  { value: "", label: "Select product" },
+                  ...getProductsByCategory(item.category).map((product) => ({
+                    value: product._id,
+                    label: `${product.name} - PKR ${product.salePrice} (${product.unit || "count"}) - Stock: ${product.stock}`,
+                  })),
+                ]}
+                placeholder="Select product"
+                className={`w-full ${!item.category ? "opacity-50 pointer-events-none" : ""} ${
+                  item.productId && item.quantity > item.availableStock ? "border-red-500" : ""
                 }`}
-                onClick={() => item.category && setProductDropdownOpen(productDropdownOpen === index ? null : index)}
-                disabled={!item.category}
-              >
-                {item.productId ? item.productName : "Select product"}
-                <FaChevronDown className="ml-2 h-4 w-4" />
-              </button>
-              {productDropdownOpen === index && item.category && (
-                <div className="absolute z-[110] mt-1 w-full rounded-md bg-white shadow-lg max-h-60 overflow-auto">
-                  <div className="py-1">
-                    {getProductsByCategory(item.category).length > 0 ? (
-                      getProductsByCategory(item.category).map((product) => (
-                        <button
-                          key={`product-${product._id}`}
-                          type="button"
-                          className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
-                          onClick={() => {
-                            handleUpdateSaleItem(index, "productId", product._id)
-                            setProductDropdownOpen(null)
-                          }}
-                        >
-                          {product.name} - PKR {product.salePrice} ({product.unit || "count"}) - Stock: {product.stock}
-                        </button>
-                      ))
-                    ) : (
-                      <div className="px-4 py-2 text-sm text-gray-500">No products available in this category</div>
-                    )}
-                  </div>
-                </div>
-              )}
+                searchable={true}
+              />
             </div>
 
             <div className={`flex ${isMobile ? "w-full" : "w-auto"} items-center gap-2 mt-2 md:mt-0`}>
@@ -386,34 +301,19 @@ export default function SaleForm({ products, onAddSale, onSuccess, isMobile }) {
       </div>
       <div className={`grid ${isMobile ? "grid-cols-1 gap-2" : "grid-cols-4 items-center gap-4"}`}>
         <label className={`${isMobile ? "" : "text-right"} text-sm font-medium text-gray-700`}>Payment Method</label>
-        <div className={`${isMobile ? "mt-1" : "col-span-3"} relative`} ref={paymentDropdownRef}>
-          <button
-            type="button"
-            className="w-full flex items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            onClick={() => setPaymentDropdownOpen(!paymentDropdownOpen)}
-          >
-            {newSale.paymentMethod}
-            <FaChevronDown className="ml-2 h-4 w-4" />
-          </button>
-          {paymentDropdownOpen && (
-            <div className="absolute z-[110] mt-1 w-full rounded-md bg-white shadow-lg">
-              <div className="py-1">
-                {["Cash", "Card", "Bank Transfer"].map((method) => (
-                  <button
-                    key={`payment-${method}`}
-                    type="button"
-                    className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={() => {
-                      setNewSale({ ...newSale, paymentMethod: method })
-                      setPaymentDropdownOpen(false)
-                    }}
-                  >
-                    {method}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+        <div className={`${isMobile ? "mt-1" : "col-span-3"}`}>
+          <AutocompleteSelect
+            value={newSale.paymentMethod}
+            onChange={(method) => setNewSale({ ...newSale, paymentMethod: method })}
+            options={[
+              { value: "Cash", label: "Cash" },
+              { value: "Card", label: "Card" },
+              { value: "Bank Transfer", label: "Bank Transfer" },
+            ]}
+            placeholder="Select payment method"
+            className="w-full"
+            searchable={false}
+          />
         </div>
       </div>
       <div className={`grid ${isMobile ? "grid-cols-1 gap-2" : "grid-cols-4 items-center gap-4"}`}>

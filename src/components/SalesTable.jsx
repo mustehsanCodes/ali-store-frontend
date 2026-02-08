@@ -1,9 +1,10 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { FaChevronDown, FaEye, FaEllipsisV, FaTrash, FaEdit } from "react-icons/fa"
+import { FaEye, FaEllipsisV, FaTrash, FaEdit } from "react-icons/fa"
 import Pagination from "./Pagination"
 import DateRangePicker from "./DateRangePicker"
+import AutocompleteSelect from "./AutocompleteSelect"
 
 export default function SalesTable({
   sales,
@@ -19,8 +20,6 @@ export default function SalesTable({
   onEditSale,
   onSearchChange,
 }) {
-  const [isDateDropdownOpen, setIsDateDropdownOpen] = useState(false)
-  const [isPaymentDropdownOpen, setIsPaymentDropdownOpen] = useState(false)
   const [showActionsFor, setShowActionsFor] = useState(null)
 
   // Pagination state
@@ -33,26 +32,27 @@ export default function SalesTable({
   const [startDate, setStartDate] = useState("")
   const [endDate, setEndDate] = useState("")
 
-  // Refs for dropdowns
-  const dateDropdownRef = useRef(null)
-  const paymentDropdownRef = useRef(null)
+  // Options for autocomplete selects
+  const dateOptions = [
+    { value: "all", label: "All Time" },
+    { value: "today", label: "Today" },
+    { value: "yesterday", label: "Yesterday" },
+    { value: "thisWeek", label: "This Week" },
+  ]
 
-  // Handle outside clicks to close dropdowns
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (isDateDropdownOpen && dateDropdownRef.current && !dateDropdownRef.current.contains(event.target)) {
-        setIsDateDropdownOpen(false)
-      }
-      if (isPaymentDropdownOpen && paymentDropdownRef.current && !paymentDropdownRef.current.contains(event.target)) {
-        setIsPaymentDropdownOpen(false)
-      }
-    }
+  const paymentOptions = [
+    { value: "all", label: "All Payments" },
+    { value: "Cash", label: "Cash" },
+    { value: "Card", label: "Card" },
+    { value: "Bank Transfer", label: "Bank Transfer" },
+  ]
 
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [isDateDropdownOpen, isPaymentDropdownOpen])
+  const itemsPerPageOptions = [
+    { value: "5", label: "5" },
+    { value: "10", label: "10" },
+    { value: "25", label: "25" },
+    { value: "50", label: "50" },
+  ]
 
   // Mobile action menu toggle
   const toggleActions = (id) => {
@@ -87,7 +87,8 @@ export default function SalesTable({
 
   // Handle items per page change
   const handleItemsPerPageChange = (e) => {
-    setItemsPerPage(Number(e.target.value))
+    const value = e.target ? e.target.value : e
+    setItemsPerPage(Number(value))
     setCurrentPage(1) // Reset to first page when items per page changes
   }
 
@@ -139,136 +140,38 @@ export default function SalesTable({
             }}
           />
           <DateRangePicker startDate={startDate} endDate={endDate} onDateChange={handleDateRangeChange} />
-          <div className="relative w-full md:w-auto" ref={dateDropdownRef}>
-            <button
-              type="button"
-              className="w-full md:w-auto flex items-center justify-between px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50"
-              onClick={() => setIsDateDropdownOpen(!isDateDropdownOpen)}
-            >
-              {dateFilter === "all"
-                ? "All Time"
-                : dateFilter === "today"
-                  ? "Today"
-                  : dateFilter === "yesterday"
-                    ? "Yesterday"
-                    : "This Week"}{" "}
-              <FaChevronDown className="ml-2 h-4 w-4" />
-            </button>
-            {isDateDropdownOpen && (
-              <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md py-1">
-                <button
-                  type="button"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                  onClick={() => {
-                    setDateFilter("all")
-                    setIsDateDropdownOpen(false)
-                  }}
-                >
-                  All Time
-                </button>
-                <button
-                  type="button"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                  onClick={() => {
-                    setDateFilter("today")
-                    setIsDateDropdownOpen(false)
-                  }}
-                >
-                  Today
-                </button>
-                <button
-                  type="button"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                  onClick={() => {
-                    setDateFilter("yesterday")
-                    setIsDateDropdownOpen(false)
-                  }}
-                >
-                  Yesterday
-                </button>
-                <button
-                  type="button"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                  onClick={() => {
-                    setDateFilter("thisWeek")
-                    setIsDateDropdownOpen(false)
-                  }}
-                >
-                  This Week
-                </button>
-              </div>
-            )}
-          </div>
-          <div className="relative w-full md:w-auto" ref={paymentDropdownRef}>
-            <button
-              type="button"
-              className="w-full md:w-auto flex items-center justify-between px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50"
-              onClick={() => setIsPaymentDropdownOpen(!isPaymentDropdownOpen)}
-            >
-              {paymentFilter === "all" ? "All Payments" : paymentFilter} <FaChevronDown className="ml-2 h-4 w-4" />
-            </button>
-            {isPaymentDropdownOpen && (
-              <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md py-1">
-                <button
-                  type="button"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                  onClick={() => {
-                    setPaymentFilter("all")
-                    setIsPaymentDropdownOpen(false)
-                  }}
-                >
-                  All
-                </button>
-                <button
-                  type="button"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                  onClick={() => {
-                    setPaymentFilter("Cash")
-                    setIsPaymentDropdownOpen(false)
-                  }}
-                >
-                  Cash
-                </button>
-                <button
-                  type="button"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                  onClick={() => {
-                    setPaymentFilter("Card")
-                    setIsPaymentDropdownOpen(false)
-                  }}
-                >
-                  Card
-                </button>
-                <button
-                  type="button"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                  onClick={() => {
-                    setPaymentFilter("Bank Transfer")
-                    setIsPaymentDropdownOpen(false)
-                  }}
-                >
-                  Bank Transfer
-                </button>
-              </div>
-            )}
-          </div>
+          <AutocompleteSelect
+            value={dateFilter}
+            onChange={setDateFilter}
+            options={dateOptions}
+            placeholder="All Time"
+            className="w-full md:w-auto min-w-[140px]"
+            searchable={false}
+          />
+          <AutocompleteSelect
+            value={paymentFilter}
+            onChange={setPaymentFilter}
+            options={paymentOptions}
+            placeholder="All Payments"
+            className="w-full md:w-auto min-w-[140px]"
+            searchable={false}
+          />
         </div>
 
         <div className="flex items-center">
           <label htmlFor="itemsPerPage" className="mr-2 text-sm text-gray-700">
             Show:
           </label>
-          <select
-            id="itemsPerPage"
-            className="rounded-md border border-gray-300 px-2 py-1 text-sm"
-            value={itemsPerPage}
-            onChange={handleItemsPerPageChange}
-          >
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={25}>25</option>
-            <option value={50}>50</option>
-          </select>
+          <AutocompleteSelect
+            value={itemsPerPage.toString()}
+            onChange={(value) => {
+              handleItemsPerPageChange({ target: { value } })
+            }}
+            options={itemsPerPageOptions}
+            placeholder="10"
+            className="min-w-[80px]"
+            searchable={false}
+          />
         </div>
       </div>
 

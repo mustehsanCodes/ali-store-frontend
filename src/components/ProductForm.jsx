@@ -1,28 +1,17 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
+import AutocompleteSelect from "./AutocompleteSelect"
 
 export default function ProductForm({ newProduct, setNewProduct, handleAddProduct, onSuccess, isMobile }) {
-  const [unitDropdownOpen, setUnitDropdownOpen] = useState(false)
   const [errors, setErrors] = useState({})
   const [touched, setTouched] = useState({})
 
-  // Ref for handling outside clicks
-  const unitDropdownRef = useRef(null)
-
-  // Handle outside clicks to close dropdown
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (unitDropdownOpen && unitDropdownRef.current && !unitDropdownRef.current.contains(event.target)) {
-        setUnitDropdownOpen(false)
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [unitDropdownOpen])
+  const unitOptions = [
+    { value: "count", label: "Count/Number" },
+    { value: "kg", label: "Kilogram (kg)" },
+    { value: "grams", label: "Grams (g)" },
+  ]
 
   // Validate form when product changes
   useEffect(() => {
@@ -199,33 +188,15 @@ export default function ProductForm({ newProduct, setNewProduct, handleAddProduc
         <label htmlFor="unit" className={`${isMobile ? "" : "text-right"} text-sm font-medium text-gray-700`}>
           Unit
         </label>
-        <div className={`${isMobile ? "mt-1" : "col-span-3"} relative`} ref={unitDropdownRef}>
-          <button
-            type="button"
-            className="w-full flex items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            onClick={() => setUnitDropdownOpen(!unitDropdownOpen)}
-          >
-            {newProduct?.unit === "kg" ? "Kilogram (kg)" : newProduct?.unit === "grams" ? "Grams (g)" : "Count/Number"}
-          </button>
-          {unitDropdownOpen && (
-            <div className="absolute z-[110] mt-1 w-full rounded-md bg-white shadow-lg">
-              <div className="py-1">
-                {["kg", "grams", "count"].map((unit) => (
-                  <button
-                    key={`unit-${unit}`}
-                    type="button"
-                    className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={() => {
-                      handleFieldChange("unit", unit)
-                      setUnitDropdownOpen(false)
-                    }}
-                  >
-                    {unit === "kg" ? "Kilogram (kg)" : unit === "grams" ? "Grams (g)" : "Count/Number"}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+        <div className={`${isMobile ? "mt-1" : "col-span-3"}`}>
+          <AutocompleteSelect
+            value={newProduct?.unit || "count"}
+            onChange={(unit) => handleFieldChange("unit", unit)}
+            options={unitOptions}
+            placeholder="Select unit"
+            className="w-full"
+            searchable={false}
+          />
         </div>
       </div>
       <button

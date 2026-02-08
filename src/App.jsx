@@ -1,10 +1,12 @@
 import Dashboard from "./components/Dashboard"
+import Footer from "./components/Footer"
 import { Toaster } from "react-hot-toast"
 
 function App() {
   return (
-    <div className="App min-h-screen bg-gray-50">
+    <div className="App min-h-screen bg-gray-50 flex flex-col">
       <Dashboard />
+      <Footer />
       <Toaster
         position="top-right"
         toastOptions={{
